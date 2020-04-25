@@ -27,7 +27,6 @@ HPFPORT = int(os.environ.get("HPFPORT", 20000))
 HPFIDENT = os.environ.get("HPFIDENT", "testing")
 HPFSECRET = os.environ.get("HPFSECRET", "secretkey")
 HIVEID = os.environ.get("HIVEID", "UnknownHive")
-SERVER_STRING = os.environ.get("SERVER_STRING", random.choice(SERVER_VERSIONS))
 
 def html_response(text):
     return web.Response(text=text, content_type='text/html')
@@ -37,9 +36,8 @@ def json_response(text):
 
 async def on_prepare(request, response):
     """Sets the Reponse Server string to user selected or random choice or known version"""
-    if SERVER_STRING == "random":
-        SERVER_STRING = random.choice(SERVER_VERSIONS)
-    response.headers['Server'] = SERVER_STRING
+    server_string = os.environ.get("SERVER_STRING", random.choice(SERVER_VERSIONS))
+    response.headers['Server'] = server_string
 
 async def hpfeeds_publish(event_message):
     async with ClientSession(HPFSERVER, HPFPORT, HPFIDENT, HPFSECRET) as client:
