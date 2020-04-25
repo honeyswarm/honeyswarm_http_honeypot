@@ -37,6 +37,8 @@ def json_response(text):
 async def on_prepare(request, response):
     """Sets the Reponse Server string to user selected or random choice or known version"""
     server_string = os.environ.get("SERVER_STRING", random.choice(SERVER_VERSIONS))
+    if server_string == "random":
+        server_string = random.choice(SERVER_VERSIONS)
     response.headers['Server'] = server_string
 
 async def hpfeeds_publish(event_message):
