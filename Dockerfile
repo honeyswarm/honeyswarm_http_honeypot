@@ -1,9 +1,11 @@
-FROM python:3.8.2-buster
+FROM alpine:latest
 
-ADD honeypot /opt/honeypot
+RUN apk add --no-cache python3 py3-pip py3-gunicorn py3-aiohttp openssl
+RUN pip install --no-cache-dir hpfeeds
+
+ADD filesystem /
+RUN chmod +x /docker-entrypoint.sh
 WORKDIR /opt/honeypot
 
-RUN pip install --no-cache-dir -r /opt/honeypot/requirements.txt
-
-CMD ["python", "./app.py"]
-
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["tail", "-f", "/dev/null"]
