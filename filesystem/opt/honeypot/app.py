@@ -41,27 +41,8 @@ async def on_prepare(request, response):
         server_string = random.choice(SERVER_VERSIONS)
     response.headers['Server'] = server_string
 
-async def hpfeeds_publish(event_message):
-    async with ClientSession(HPFSERVER, HPFPORT, HPFIDENT, HPFSECRET) as client:
-        client.publish('http.sessions', json.dumps(event_message).encode('utf-8'))
-    return True
 
-
-async def handle(request):
-
-    # ToDo, modify the response based on what has been requested. 
-    # Or server a random HTML page
-    name = request.match_info.get('name', "Anonymous")
-
-    # For Now jsut going to always return a 200 with an HTML page. 
-    text = """<html>
-    <head></head>
-    <body>
-    <p>Under Maintainance</p>
-    </body>
-    </html>
-    """
-
+    # then we create the log entry before we return the response object. 
     print("{0} request for {1}".format(request.method, request.path))
 
     # Get HTTP as version string
@@ -106,8 +87,31 @@ async def handle(request):
         print("Unable to connect to hpfeeds broker.")
         pass
 
+
+async def hpfeeds_publish(event_message):
+    async with ClientSession(HPFSERVER, HPFPORT, HPFIDENT, HPFSECRET) as client:
+        client.publish('http.sessions', json.dumps(event_message).encode('utf-8'))
+    return True
+
+
+async def handle(request):
+
+    # ToDo, modify the response based on what has been requested. 
+    # Or server a random HTML page
+    name = request.match_info.get('name', "Anonymous")
+
+    # For Now jsut going to always return a 200 with an HTML page. 
+    text = """<html>
+    <head></head>
+    <body>
+    <p>Under Maintainance</p>
+    </body>
+    </html>
+    """
+
     # Send the response to the client
     return html_response(text)
+
 
 app = web.Application()
 app.on_response_prepare.append(on_prepare)
