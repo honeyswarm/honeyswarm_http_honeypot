@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+filesystem/opt/honeypot/ca-crt.pem
+filesystem/opt/honeypot/ca.key

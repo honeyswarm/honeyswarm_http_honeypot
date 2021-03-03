@@ -27,12 +27,17 @@ HPFPORT = int(os.environ.get("HPFPORT", 20000))
 HPFIDENT = os.environ.get("HPFIDENT", "testing")
 HPFSECRET = os.environ.get("HPFSECRET", "secretkey")
 HIVEID = os.environ.get("HIVEID", "UnknownHive")
+HTTP_PORT = os.environ.get("HTTP_PORT", "80")
+HTTPS_PORT = os.environ.get("HTTPs_PORT", "443")
+
 
 def html_response(text):
     return web.Response(text=text, content_type='text/html')
 
+
 def json_response(text):
     return web.Response(text=text, content_type='application/json')
+
 
 async def on_prepare(request, response):
     """Sets the Reponse Server string to user selected or random choice or known version"""
@@ -41,8 +46,7 @@ async def on_prepare(request, response):
         server_string = random.choice(SERVER_VERSIONS)
     response.headers['Server'] = server_string
 
-
-    # then we create the log entry before we return the response object. 
+    # then we create the log entry before we return the response object.
     print("{0} request for {1}".format(request.method, request.path))
 
     # Get HTTP as version string
@@ -58,12 +62,31 @@ async def on_prepare(request, response):
     for k, v in request.headers.items():
         http_headers[k] = v
 
+    # Try to get a valid incoming port
+    if "Host" in http_headers:
+        try:
+            http_port = http_headers['Host'].split(":")[-1]
+        except Exception:
+            http_port = HTTP_PORT
+
     # convert POST to a standard dict, We will loose Duplicates
     http_post = {}
     if request.method == 'POST':
-        data = await request.post()
-        for key, value in data.items():
-            http_post[key] = value
+        try:
+            post_data = await request.post()
+            for key, value in post_data.items():
+                http_post[key] = value
+        except Exception as err:
+            print(err)
+            pass
+
+        try:
+            json_data = await request.json()
+            for key, value in json_data.items():
+                http_post[key] = value
+        except Exception as err:
+            print(err)
+            pass
 
     event_message = {
         "hive_id": HIVEID,
@@ -76,7 +99,8 @@ async def on_prepare(request, response):
         "http_query": request.path_qs,
         "http_post": http_post,
         "http_headers": http_headers,
-        "http_path": request.path
+        "http_path": request.path,
+        "port": http_port
     }
 
     # Send the Broker message
@@ -100,7 +124,7 @@ async def handle(request):
     # Or server a random HTML page
     name = request.match_info.get('name', "Anonymous")
 
-    # For Now jsut going to always return a 200 with an HTML page. 
+    # For Now just going to always return a 200 with an HTML page. 
     text = """<html>
     <head></head>
     <body>
@@ -116,5 +140,4 @@ async def handle(request):
 app = web.Application()
 app.on_response_prepare.append(on_prepare)
 app.router.add_route('*', '/{name:.*}', handle)
-#web.run_app(app, port=8181)
-
+# web.run_app(app, port=8181)
